@@ -12,7 +12,7 @@ import logging.config
 import os
 import logging
 
-LOG_CONF = os.path.join('Ghost','conf', 'log.conf')
+LOG_CONF = os.path.join('GhostInDoraemon','conf', 'log.conf')
 with open(LOG_CONF) as log_f:
     logging.config.dictConfig(json.load(log_f))
 
@@ -185,7 +185,6 @@ class PokerSocket(object):
                 LOG.info('event_name:{}'.format(event_name))
                 LOG.info('data : {}'.format(data))                
                 self.evtHandler(event_name, data)
-                
         except Exception, ex:
             LOG.exception("Uncaught exception (%s) %s", type(ex), ex)
             self.doListen()
@@ -287,9 +286,9 @@ class PotOddsPokerBot(PokerBot):
                 print e.message
                 continue
         # The large rank value means strong hand card
-        Log.info("Win:{}".format(win))
+        LOG.info("Win:{}".format(win))
         win_prob = win / float(round)
-        Log.info("win_probability:{}".format(win_prob))
+        LOG.info("win_probability:{}".format(win_prob))
         return win_prob
 
     def declareAction(self,hole, board, round, my_Raise_Bet, my_Call_Bet,Table_Bet,number_players,raise_count,bet_count,my_Chips,total_bet):
@@ -298,11 +297,11 @@ class PotOddsPokerBot(PokerBot):
         self.number_players=number_players
 
         my_Raise_Bet=(my_Chips*self.bet_tolerance)/(1-self.bet_tolerance)
-        Log.info("Round:{}".format(round))
+        LOG.info("Round:{}".format(round))
         score = HandEvaluator.evaluate_hand(hole, board)
-        Log.info("score:{}".format(score))
+        LOG.info("score:{}".format(score))
         #score = math.pow(score, self.number_players)
-        Log.info("score:{}".format(score))
+        LOG.info("score:{}".format(score))
 
         if round == 'preflop':
             if score >= self.preflop_tight_loose_threshold:
@@ -333,12 +332,13 @@ class PotOddsPokerBot(PokerBot):
                 else:
                     action = 'fold'
                     amount = 0
-        #if (action=='call' or action=='raise') and len(board)>=4:
-            #simulation_number=1000
-            #win_rate=self.get_win_prob(hole, board, simulation_number,number_players)
-            #if win_rate<0.4:
-                #action = 'fold'
-                #amount = 0
+        if (action=='call' or action=='raise') and len(board)>=4:
+            simulation_number=1000
+            win_rate=self.get_win_prob(hole, board, simulation_number,number_players)
+            if win_rate<0.4:
+                action = 'fold'
+                amount = 0
+                LOG.info("Change")
                 #print 'change'
         return action, amount
 
@@ -353,7 +353,7 @@ class MontecarloPokerBot(PokerBot):
     def declareAction(self,hole, board, round, my_Raise_Bet, my_Call_Bet,Table_Bet,number_players,raise_count,bet_count,my_Chips,total_bet):
         LOG.info("------------MontecarloPokerBot---------------------")
         win_rate =self.get_win_prob(hole,board,number_players)
-        Log.info("win Rate:{}".format(win_rate))
+        LOG.info("win Rate:{}".format(win_rate))
         if win_rate > 0.5:
             if win_rate > 0.85:
                 # If it is extremely likely to win, then raise as much as possible
@@ -441,9 +441,9 @@ class MontecarloPokerBot(PokerBot):
             except Exception, e:
                 #print e.message
                 continue
-        Log.info("Win:{}".format(win))
+        LOG.info("Win:{}".format(win))
         win_prob = win / float(round)
-        Log.info("win_prob:{}".format(win_pro))
+        LOG.info("win_prob:{}".format(win_pro))
         return win_prob
 
 class FreshPokerBot(PokerBot):
@@ -454,10 +454,11 @@ class FreshPokerBot(PokerBot):
     def declareAction(self,holes, boards, round, my_Raise_Bet, my_Call_Bet,Table_Bet,number_players,raise_count,bet_count,my_Chips,total_bet):
         LOG.info("------------FreshPokerBot---------------------")
         my_rank = HandEvaluator.evaluate_hand(holes, boards)
-        if my_rank>0.85:
+        #if my_rank>0.85:
+        if my_rank>0.7:
             action = 'raise'
             amount = my_Raise_Bet
-        elif  my_rank>0.6:
+        elif  my_rank>0.5:
             action = 'call'
             amount = my_Call_Bet
         else:
@@ -479,15 +480,15 @@ if __name__ == '__main__':
 
         print "----------------Start Game----------------------"
         LOG.info("----------------Start Game----------------------")
-        playerName="c89a2053a2bc4c8eb972ec819c171415"
+        playerName="3dedee18681d436ba401bf10b7ba2cbc"
         #playerName="jerry001"
         #connect_url="ws://iskf.org:80/"
         connect_url="ws://poker-battle.vtr.trendnet.org:3001/"
         #connect_url="ws://poker-dev.wrs.club:3001/"
         simulation_number=100
         bet_tolerance=0.1
-        #myPokerBot=FreshPokerBot()
+        myPokerBot=FreshPokerBot()
         #myPokerBot=MontecarloPokerBot(simulation_number)
-        myPokerBot=PotOddsPokerBot(preflop_threshold_Tight,aggresive_threshold,bet_tolerance)
+        #myPokerBot=PotOddsPokerBot(preflop_threshold_Tight,aggresive_threshold,bet_tolerance)
         myPokerSocket=PokerSocket(playerName,connect_url,myPokerBot)
         myPokerSocket.doListen()
