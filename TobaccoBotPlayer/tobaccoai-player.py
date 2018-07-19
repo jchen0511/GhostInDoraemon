@@ -11,6 +11,17 @@ sys.path.insert(0, "holdem_calc")
 import holdem_calc
 import deuces
 
+import time
+import logging.config
+import os
+import logging
+
+LOG_CONF = os.path.join('..\\..\\GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
+with open(LOG_CONF) as log_f:
+    logging.config.dictConfig(json.load(log_f))
+
+LOG = logging.getLogger('ghost-tobacco')
+
 # pip install websocket-client
 
 ws = ""
@@ -63,6 +74,7 @@ def take_action(action="check", amount=0):
     message["data"]["amount"] = int(amount)
 
     print "==== Take Action ==== : %s %s" % (action, str(amount))
+    LOG.info("==== Take Action ==== : {} {}".format(action, str(amount)))
     ws.send(json.dumps(message))
     action_taken = True
 
@@ -73,6 +85,7 @@ def expected_value(win_prob, min_bet):
     global pot
     EV = (((pot + min_bet) * win_prob) - min_bet)
     print "==== Expected value ==== %d" % EV
+    LOG.info("==== Expected value ==== {}".format(EV))
     return (((pot + min_bet) * win_prob) - min_bet)
 
 def hole_cards_score(hole_cards):
@@ -162,6 +175,12 @@ def virtual_player_count(data):
                players_stat["v_bet"],
                players_stat["v_raise"],
                players_stat["v_allin"])
+    LOG.info("==== Virtual player count ==== {}  = {} + {} + {} + {}".format(v_players,
+               players_stat["base_line"],
+               players_stat["v_bet"],
+               players_stat["v_raise"],
+               players_stat["v_allin"]))
+
     return v_players
 
 def calc_win_prob_by_sampling(hole_cards, board_cards, data):
@@ -199,10 +218,12 @@ def calc_win_prob_by_sampling(hole_cards, board_cards, data):
             win += 1
         succeeded_sample += 1
     print "==== sampling result ==== win : %d, total : %d" % (win, succeeded_sample)
+    LOG.info("==== sampling result ==== win : {}, total : {}".format(win, succeeded_sample))
     win_one_prob = win/float(succeeded_sample)
 
     win_all_prob = win_one_prob ** virtual_player_count(data)
     print "==== Win probability ==== " + str(win_all_prob)
+    LOG.info("==== Win probability ==== " + str(win_all_prob))
     return win_all_prob
 
 def calc_win_prob(hole_cards, board_cards, data):
@@ -219,6 +240,7 @@ def calc_win_prob(hole_cards, board_cards, data):
 
     win_all_prob = (win_one_prob[0] + win_one_prob[1]) ** virtual_player_count(data)
     print "==== Win probability ==== " + str(win_all_prob)
+    LOG.info("==== Win probability ==== " + str(win_all_prob))
     return win_all_prob
 
 def evaluate_river(hole_cards, board_cards, data):
@@ -293,17 +315,21 @@ def evaluate_deal(hole_cards, data):
 
     if score > min(hole_cards_score(["As", "Js"]), hole_cards_score(["Qs", "Qh"])):
         print "==== Judgement is bet ==== score : " + str(score)
+        LOG.info("==== Judgement is bet ==== score : " + str(score))
         amount = 2 * (data["self"]["minBet"] + 10)
         take_action("bet", amount)
     elif score > min(hole_cards_score(["As", "9s"]), hole_cards_score(["7s", "7h"])):
         print "==== Judgement is bet ==== score : " + str(score)
+        LOG.info("==== Judgement is bet ==== score : " + str(score))
         amount = 1.5 * (data["self"]["minBet"] + 10)
         take_action("bet", amount)
     elif ev >= 0 or data["self"]["minBet"] <= 20:
         print "==== Judgement is call ==== score : %d ,EV : %d" % (score, ev)
+        LOG.info("==== Judgement is call ==== score : %d ,EV : %d" % (score, ev))
         take_action("call")
     else:
         print "==== Judgement is fold ==== score : " + str(score)
+        LOG.info("==== Judgement is fold ==== score : " + str(score))
         take_action("fold")
 
 def convert_card_format(card):
@@ -313,6 +339,7 @@ def convert_card_format(card):
     """
     if len(card) != 2:
         print "Wrong card format"
+        LOG.info("Wrong card format")
         return
     return card[0] + card[1].lower()
 
@@ -324,8 +351,11 @@ def evaluate(data):
     hole_cards  = [convert_card_format(c) for c in data["self"]["cards"]]
     board_cards = [convert_card_format(c) for c in data["game"]["board"]]
     print "==== my cards ==== " + str(hole_cards)
+    LOG.info("==== my cards ==== " + str(hole_cards))
     print "==== board ==== " + str(board_cards)
+    LOG.info("==== board ==== " + str(board_cards))
     print "==== Current pot ==== %d" % (pot)
+    LOG.info("==== Current pot ==== %d" % (pot))
 
     if data["game"]["roundName"] == "Deal":
         evaluate_deal(hole_cards, data)
@@ -381,6 +411,7 @@ def react(event, data):
         my_round_action = dict()
         update_player_count(data)
         print "==== Player count in %s ==== %d" % (data["table"]["roundName"], player_count[data["table"]["roundName"]])
+        LOG.info("==== Player count in %s ==== %d" % (data["table"]["roundName"], player_count[data["table"]["roundName"]]))
     elif event == "__start_reload":
         ws.send(json.dumps({"eventName" : "__reload"}))
     elif event == "__round_end":
@@ -388,8 +419,10 @@ def react(event, data):
             if player["playerName"] == my_md5:
                 if player["winMoney"] > 0:
                     print "==== Round end : Win money!! ==== %d" % ( player["winMoney"])
+                    LOG.info("==== Round end : Win money!! ==== %d" % ( player["winMoney"]))
                 else:
                     print "==== Round end : Cheer up! ==== Loss bet : %d" % (my_bet)
+                    LOG.info("==== Round end : Cheer up! ==== Loss bet : %d" % (my_bet))
 
     elif event == "__new_round":
         my_bet = 0
@@ -423,10 +456,13 @@ def react(event, data):
                 my_chips = winner["chips"]
         if my_chips == max_chips:
             print "==== Game over : YOU ARE THE WINNER!! ==== Final chips %d" % max_chips
+            LOG.info("==== Game over : YOU ARE THE WINNER!! ==== Final chips %d" % max_chips)
         else:
             print "==== Game over : So close... ==== %d vs %d" % (my_chips, max_chips)
+            LOG.info("==== Game over : So close... ==== %d vs %d" % (my_chips, max_chips))
     else:
         print "==== unknown event ==== : " + event
+        LOG.info("==== unknown event ==== : " + event)
 
 
 def doListen():
@@ -445,10 +481,13 @@ def doListen():
             event_name = msg["eventName"]
             data = msg["data"]
             print event_name
+            LOG.info(event_name)
             print data
+            LOG.info(data)
             react(event_name, data)
     except Exception, e:
         print e.message
+        LOG.info(e.message)
         doListen()
 
 
@@ -457,4 +496,5 @@ if __name__ == '__main__':
     my_id = "King_of_MDFK"
     my_md5 = hashlib.md5(my_id).hexdigest()
     print my_md5
+    LOG.info(my_md5)
     doListen()

@@ -12,7 +12,8 @@ import logging.config
 import os
 import logging
 
-LOG_CONF = os.path.join('GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
+#LOG_CONF = os.path.join('GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
+LOG_CONF = os.path.join('..\\..\\GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
 with open(LOG_CONF) as log_f:
     logging.config.dictConfig(json.load(log_f))
 
@@ -480,11 +481,12 @@ if __name__ == '__main__':
 
         print "----------------Start Game----------------------"
         LOG.info("----------------Start Game----------------------")
-        playerName="3dedee18681d436ba401bf10b7ba2cbc"
+        #playerName="3dedee18681d436ba401bf10b7ba2cbc"
         #playerName="jerry001"
+        playerName = "King_of_MDFK"
         #connect_url="ws://iskf.org:80/"
-        connect_url="ws://poker-battle.vtr.trendnet.org:3001/"
-        #connect_url="ws://poker-dev.wrs.club:3001/"
+        # connect_url="ws://poker-battle.vtr.trendnet.org:3001/"
+        connect_url="ws://poker-dev.wrs.club:3001/"
         simulation_number=100
         bet_tolerance=0.1
         #myPokerBot=FreshPokerBot()
