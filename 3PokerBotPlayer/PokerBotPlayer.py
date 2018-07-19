@@ -12,7 +12,7 @@ import logging.config
 import os
 import logging
 
-LOG_CONF = os.path.join('GhostInDoraemon','conf', 'log.conf')
+LOG_CONF = os.path.join('GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
 with open(LOG_CONF) as log_f:
     logging.config.dictConfig(json.load(log_f))
 
@@ -487,8 +487,8 @@ if __name__ == '__main__':
         #connect_url="ws://poker-dev.wrs.club:3001/"
         simulation_number=100
         bet_tolerance=0.1
-        myPokerBot=FreshPokerBot()
+        #myPokerBot=FreshPokerBot()
         #myPokerBot=MontecarloPokerBot(simulation_number)
-        #myPokerBot=PotOddsPokerBot(preflop_threshold_Tight,aggresive_threshold,bet_tolerance)
+        myPokerBot=PotOddsPokerBot(preflop_threshold_Tight,aggresive_threshold,bet_tolerance)
         myPokerSocket=PokerSocket(playerName,connect_url,myPokerBot)
         myPokerSocket.doListen()
