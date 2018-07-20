@@ -16,7 +16,7 @@ import logging.config
 import os
 import logging
 
-LOG_CONF = os.path.join('..\\..\\GhostInDoraemon\\3PokerBotPlayer','conf', 'log.conf')
+LOG_CONF = os.path.join('..','..','GhostInDoraemon','3PokerBotPlayer','conf', 'log.conf')
 with open(LOG_CONF) as log_f:
     logging.config.dictConfig(json.load(log_f))
 
@@ -54,6 +54,8 @@ card_to_score = {
     "K" : 13,
     "A" : 14
 }
+
+g_we_got_pair= False
 
 def take_action(action="check", amount=0):
     """
@@ -93,6 +95,8 @@ def hole_cards_score(hole_cards):
     Calculate a score for hole cards
     Return hish score if we got high cards/pair/possible straight/possible flush
     """
+    global g_we_got_pair
+    g_we_got_pair = False # initial
     high_card = 0
     same_suit = 0
     possible_straight = 0
@@ -104,6 +108,7 @@ def hole_cards_score(hole_cards):
 
     if hole_cards[0][1] == hole_cards[1][1]:
         same_suit = 2
+        g_we_got_pair = True
 
     value_diff = card_to_score[hole_cards[0][0]] - card_to_score[hole_cards[1][0]]
     if value_diff in [-4, 4]:
@@ -460,9 +465,14 @@ def react(event, data):
         else:
             print "==== Game over : So close... ==== %d vs %d" % (my_chips, max_chips)
             LOG.info("==== Game over : So close... ==== %d vs %d" % (my_chips, max_chips))
+
+        doListen()
+
     else:
         print "==== unknown event ==== : " + event
         LOG.info("==== unknown event ==== : " + event)
+
+        doListen()
 
 
 def doListen():
