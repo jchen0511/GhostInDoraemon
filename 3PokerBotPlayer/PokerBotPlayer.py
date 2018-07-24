@@ -94,15 +94,15 @@ class PokerSocket(object):
             self.hole.append(getCard(card))
 
 
-        LOG.info('my_Raise_Bet:{}'.format(self.my_Raise_Bet))
-        LOG.info('board:{}'.format(self.board))
-        LOG.info('total_bet:{}'.format(self.Table_Bet))
-        LOG.info('hands:{}'.format(self.hole))
+        LOG.info('PokerSocket my_Raise_Bet:{}'.format(self.my_Raise_Bet))
+        LOG.info('PokerSocket board:{}'.format(self.board))
+        LOG.info('PokerSocket total_bet:{}'.format(self.Table_Bet))
+        LOG.info('PokerSocket hands:{}'.format(self.hole))
 
         if self.board == []:
             round = 'preflop'
 
-        LOG.info("round:{}".format(round))
+        LOG.info("PokerSocket round:{}".format(round))
         #print "round:{}".format(round)
 
 
@@ -128,7 +128,7 @@ class PokerSocket(object):
             LOG.info('board:{}'.format(self.board))
             LOG.info('total_bet:{}'.format(self.Table_Bet))
         elif action == "__bet":
-            action,amount=self.getAction(data)
+            action, amount=self.getAction(data)
             LOG.info("action: {}".format(action))
             LOG.info("action amount: {}".format(amount))
             self.ws.send(json.dumps({
@@ -167,7 +167,7 @@ class PokerSocket(object):
                     winChips=winMoney
             LOG.info("winPlayer:{}".format(isWin))
             LOG.info("winChips:{}".format(winChips))
-            self.pokerbot.game_over(isWin,winChips,data)
+            self.pokerbot.game_over(isWin, winChips,data)
 
     def doListen(self):
         try:
@@ -193,7 +193,9 @@ class PokerSocket(object):
     def evtHandler(self, event_name, data):
         if event_name == "__new_round":
             self.takeAction(event_name, data)
-        if event_name == "__show_action":
+        if event_name == "__action":
+            self.takeAction(event_name, data)
+        if event_name == "__deal":
             self.takeAction(event_name, data)
         if event_name == "__round_end":      
             self.takeAction(event_name, data)      
@@ -201,15 +203,6 @@ class PokerSocket(object):
             LOG.info('__game_over')  
             time.sleep(8)
             self.doListen()
-            '''
-            self.ws.send(json.dumps({
-                "eventName": "__join",
-                "data": {
-                    "playerName": self.playerName
-                }
-            }))
-            '''
-            
 
 
 class MontecarloPokerBot(PokerBot):
@@ -225,7 +218,7 @@ class MontecarloPokerBot(PokerBot):
     def declareAction(self,hole, board, round, my_Raise_Bet, my_Call_Bet,Table_Bet,number_players,raise_count,bet_count,my_Chips,total_bet):
         LOG.info("------------MontecarloPokerBot declareAction---------------------")
         win_rate =self.get_win_prob(hole,board,number_players)
-        LOG.info("win Rate:{}".format(win_rate))
+        LOG.info("MontecarloPokerBot win Rate:{}".format(win_rate))
         if win_rate > 0.5:
             if win_rate > 0.7:
                 # If it is extremely likely to win, then raise as much as possible
@@ -241,7 +234,7 @@ class MontecarloPokerBot(PokerBot):
         return action,amount
 
     def getCardID(self,card):
-        LOG.info("------------MontecarloPokerBot getCardID---------------------")
+        #LOG.info("------------MontecarloPokerBot getCardID---------------------")
         rank=card.rank
         suit=card.suit
         suit=suit-1
@@ -249,7 +242,7 @@ class MontecarloPokerBot(PokerBot):
         return id
 
     def genCardFromId(self,cardID):
-        LOG.info("------------MontecarloPokerBot genCardFromId---------------------")
+        #LOG.info("------------MontecarloPokerBot genCardFromId---------------------")
         if int(cardID)>13:
             rank=int(cardID)%13
             if rank==0:
@@ -272,7 +265,7 @@ class MontecarloPokerBot(PokerBot):
             return Card(rank,suit)
 
     def _pick_unused_card(self,card_num, used_card):
-        LOG.info("------------MontecarloPokerBot _pick_unused_card---------------------")
+        #LOG.info("------------MontecarloPokerBot _pick_unused_card---------------------")
         used = [self.getCardID(card) for card in used_card]
         unused = [card_id for card_id in range(1, 53) if card_id not in used]
         choiced = random.sample(unused, card_num)
@@ -296,32 +289,32 @@ class MontecarloPokerBot(PokerBot):
         for i in range(self.simulation_number):
 
             board_cards_to_draw = 5 - len(board_cards)  # 2
-            LOG.info("board_cards_to_draw:{}".format(board_cards_to_draw))
+            LOG.info("MontecarloPokerBot board_cards_to_draw:{}".format(board_cards_to_draw))
             board_sample = board_cards + self._pick_unused_card(board_cards_to_draw, board_cards + hand_cards)
-            LOG.info("board_sample:{}".format(board_sample))
+            LOG.info("MontecarloPokerBot board_sample:{}".format(board_sample))
             unused_cards = self._pick_unused_card((num_players - 1) * 2, hand_cards + board_sample)
             opponents_hole = [unused_cards[2 * i:2 * i + 2] for i in range(num_players - 1)]
-            LOG.info("opponents_hole:{}".format(opponents_hole))
+            LOG.info("MontecarloPokerBot opponents_hole:{}".format(opponents_hole))
             hand_sample = self._pick_unused_card(2, board_sample + hand_cards)
-            LOG.info("hand_sample:{}".format(hand_sample))
+            LOG.info("MontecarloPokerBot hand_sample:{}".format(hand_sample))
 
             try:
                 opponents_score = [evaluator.evaluate_hand(hole, board_sample) for hole in opponents_hole]
-                LOG.info("opponents_score:{}".format(opponents_score))
+                LOG.info("MontecarloPokerBot opponents_score:{}".format(opponents_score))
                 my_rank = evaluator.evaluate_hand(hand_cards, board_sample)
-                LOG.info("my_rank:{}".format(my_rank))
+                LOG.info("MontecarloPokerBot my_rank:{}".format(my_rank))
                 if my_rank >= max(opponents_score):
                     win += 1
                 rival_rank = evaluator.evaluate_hand(hand_sample, board_sample)
-                LOG.info("rival_rank:{}".format(rival_rank))
+                LOG.info("MontecarloPokerBot rival_rank:{}".format(rival_rank))
                 round+=1
             except Exception, e:
                 print "MontecarloPokerBot get_win_prob exception:{}".format(e.message)
                 continue
 
-        LOG.info("Win:{}".format(win))
+        LOG.info("MontecarloPokerBot Win:{}".format(win))
         win_prob = win / float(round)
-        LOG.info("win_prob:{}".format(win_prob))
+        LOG.info("MontecarloPokerBot win_prob:{}".format(win_prob))
         return win_prob
 
 
