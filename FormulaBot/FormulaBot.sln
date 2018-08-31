@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2003
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "FormulaBot", "FormulaBot\FormulaBot.pyproj", "{C832D7E6-B312-488C-8BDA-2B1628E3BC23}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C832D7E6-B312-488C-8BDA-2B1628E3BC23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C832D7E6-B312-488C-8BDA-2B1628E3BC23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D8D6CD96-F0F8-45F4-A52D-A981EA02CF44}
+	EndGlobalSection
+EndGlobal
