@@ -33,7 +33,10 @@
     <Compile Include="ImageProcessor.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="PID.py">
+    <Compile Include="CustomLog.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Pid.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

@@ -2,29 +2,21 @@
 #
 # Auto-driving Bot
 #
-# Revision: v1.2
+# Revision:      v1.2
 # Released Date: Aug 20, 2018
 #
-from time import time
-from PIL  import Image
-from io   import BytesIO
+
+
+
 
 #import datetime
 import os
-import cv2
-import math
-import numpy as np
-import base64
 import logging
 
-import AutoDrive
+
+import CustomLog
 import Car
-
-
-
-def logit(msg):
-    print("%s" % msg)
-
+import AutoDrive
 
 if __name__ == "__main__":
     import shutil
@@ -37,21 +29,24 @@ if __name__ == "__main__":
     from flask import Flask
 
     parser = argparse.ArgumentParser(description='AutoDriveBot')
-    parser.add_argument('record',
+    parser.add_argument(
+        'record',
         type=str,
         nargs='?',
         default='',
-        help='Path to image folder to record the images.')
+        help='Path to image folder to record the images.'
+    )
     args = parser.parse_args()
 
     if args.record:
         if not os.path.exists(args.record):
             os.makedirs(args.record)
-        logit("Start recording images to %s..." % args.record)
+        CustomLog.logit("Start recording images to %s..." % args.record)
 
     sio = socketio.Server()
     def send_control(steering_angle, throttle):
-        sio.emit("steer",
+        sio.emit(
+            "steer",
             data={
                 'steering_angle': str(steering_angle),
                 'throttle': str(throttle)
@@ -74,3 +69,6 @@ if __name__ == "__main__":
 
     app = socketio.Middleware(sio, Flask(__name__))
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+
+# vim: set sw=4 ts=4 et :
+

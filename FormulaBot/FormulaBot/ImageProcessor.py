@@ -1,6 +1,12 @@
+import numpy as np
+import cv2
+import math
+import logging
+import CustomLog
+
 class ImageProcessor(object):
     @staticmethod
-    def show_image(img, name="image", scale=1.0):
+    def show_image(img, name = "image", scale = 1.0):
         if scale and scale != 1.0:
             img = cv2.resize(img, newsize, interpolation=cv2.INTER_CUBIC) 
 
@@ -10,7 +16,7 @@ class ImageProcessor(object):
 
 
     @staticmethod
-    def save_image(folder, img, prefix="img", suffix=""):
+    def save_image(folder, img, prefix = "img", suffix = ""):
         from datetime import datetime
         filename = "%s-%s%s.jpg" % (prefix, datetime.now().strftime('%Y%m%d-%H%M%S-%f'), suffix)
         cv2.imwrite(os.path.join(folder, filename), img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
@@ -36,7 +42,7 @@ class ImageProcessor(object):
         maximum = img.max()
         if maximum == 0:
             return img
-        adjustment = min(255.0 / img.max(), 3.0)
+        adjustment = min(255.0/img.max(), 3.0)
         normalized = np.clip(img * adjustment, 0, 255)
         normalized = np.array(normalized, dtype=np.uint8)
         return normalized
@@ -64,8 +70,8 @@ class ImageProcessor(object):
     @staticmethod
     def _crop_image(img):
         bottom_half_ratios = (0.55, 1.0)
-        bottom_half_slice = slice(*(int(x * img.shape[0]) for x in bottom_half_ratios))
-        bottom_half = img[bottom_half_slice, :, :]
+        bottom_half_slice  = slice(*(int(x * img.shape[0]) for x in bottom_half_ratios))
+        bottom_half        = img[bottom_half_slice, :, :]
         return bottom_half
 
 
@@ -79,25 +85,25 @@ class ImageProcessor(object):
 
     @staticmethod
     def find_lines(img):
-        grayed = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(grayed, (3, 3), 0)
-        #edged = cv2.Canny(blurred, 0, 150)
+        grayed      = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        blurred     = cv2.GaussianBlur(grayed, (3, 3), 0)
+        #edged      = cv2.Canny(blurred, 0, 150)
 
-        sobel_x = cv2.Sobel(blurred, cv2.CV_16S, 1, 0)
-        sobel_y = cv2.Sobel(blurred, cv2.CV_16S, 0, 1)
+        sobel_x     = cv2.Sobel(blurred, cv2.CV_16S, 1, 0)
+        sobel_y     = cv2.Sobel(blurred, cv2.CV_16S, 0, 1)
         sobel_abs_x = cv2.convertScaleAbs(sobel_x)
         sobel_abs_y = cv2.convertScaleAbs(sobel_y)
-        edged = cv2.addWeighted(sobel_abs_x, 0.5, sobel_abs_y, 0.5, 0)
+        edged       = cv2.addWeighted(sobel_abs_x, 0.5, sobel_abs_y, 0.5, 0)
 
-        lines = cv2.HoughLinesP(edged, 1, np.pi / 180, 10, 5, 5)
+        lines       = cv2.HoughLinesP(edged, 1, np.pi / 180, 10, 5, 5)
         return lines
 
 
     @staticmethod
-    def _find_best_matched_line(thetaA0, thetaB0, tolerance, vectors, matched=None, start_index=0):
+    def _find_best_matched_line(thetaA0, thetaB0, tolerance, vectors, matched = None, start_index = 0):
         if matched is not None:
             matched_distance, matched_length, matched_thetaA, matched_thetaB, matched_coord = matched
-            matched_angle = abs(np.pi / 2 - matched_thetaB)
+            matched_angle = abs(np.pi/2 - matched_thetaB)
 
         for i in xrange(start_index, len(vectors)):
             distance, length, thetaA, thetaB, coord = vectors[i]
@@ -108,58 +114,58 @@ class ImageProcessor(object):
                 if matched is None:
                     matched = vectors[i]
                     matched_distance, matched_length, matched_thetaA, matched_thetaB, matched_coord = matched
-                    matched_angle = abs(np.pi / 2 - matched_thetaB)
+                    matched_angle = abs(np.pi/2 - matched_thetaB)
                     continue
 
-                heading_angle = abs(np.pi / 2 - thetaB)
+                heading_angle = abs(np.pi/2 - thetaB)
 
                 if heading_angle > matched_angle:
                     continue
                 if heading_angle < matched_angle:
                     matched = vectors[i]
                     matched_distance, matched_length, matched_thetaA, matched_thetaB, matched_coord = matched
-                    matched_angle = abs(np.pi / 2 - matched_thetaB)
+                    matched_angle = abs(np.pi/2 - matched_thetaB)
                     continue
                 if distance < matched_distance:
                     continue
                 if distance > matched_distance:
                     matched = vectors[i]
                     matched_distance, matched_length, matched_thetaA, matched_thetaB, matched_coord = matched
-                    matched_angle = abs(np.pi / 2 - matched_thetaB)
+                    matched_angle = abs(np.pi/2 - matched_thetaB)
                     continue
                 if length < matched_length:
                     continue
                 if length > matched_length:
                     matched = vectors[i]
                     matched_distance, matched_length, matched_thetaA, matched_thetaB, matched_coord = matched
-                    matched_angle = abs(np.pi / 2 - matched_thetaB)
+                    matched_angle = abs(np.pi/2 - matched_thetaB)
                     continue
 
         return matched
 
 
     @staticmethod
-    def find_steering_angle_by_line(img, last_steering_angle, debug=True):
+    def find_steering_angle_by_line(img, last_steering_angle, debug = True):
         steering_angle = 0.0
-        lines = ImageProcessor.find_lines(img)
+        lines          = ImageProcessor.find_lines(img)
 
         if lines is None:
             return steering_angle
 
         image_height = img.shape[0]
-        image_width = img.shape[1]
-        camera_x = image_width / 2
-        camera_y = image_height
-        vectors = []
+        image_width  = img.shape[1]
+        camera_x     = image_width / 2
+        camera_y     = image_height
+        vectors      = []
 
         for line in lines:
             for x1, y1, x2, y2 in line:
-                thetaA = math.atan2(abs(y2 - y1), (x2 - x1))
-                thetaB1 = math.atan2(abs(y1 - camera_y), (x1 - camera_x))
-                thetaB2 = math.atan2(abs(y2 - camera_y), (x2 - camera_x))
-                thetaB = thetaB1 if abs(np.pi / 2 - thetaB1) < abs(np.pi / 2 - thetaB2) else thetaB2
+                thetaA   = math.atan2(abs(y2 - y1), (x2 - x1))
+                thetaB1  = math.atan2(abs(y1 - camera_y), (x1 - camera_x))
+                thetaB2  = math.atan2(abs(y2 - camera_y), (x2 - camera_x))
+                thetaB   = thetaB1 if abs(np.pi/2 - thetaB1) < abs(np.pi/2 - thetaB2) else thetaB2
 
-                length = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                length   = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
                 distance = min(math.sqrt((x1 - camera_x) ** 2 + (y1 - camera_y) ** 2),
                                math.sqrt((x2 - camera_x) ** 2 + (y2 - camera_y) ** 2))
 
@@ -169,8 +175,7 @@ class ImageProcessor(object):
                     # draw the edges
                     cv2.line(img, (x1, y1), (x2, y2), (255, 255, 0), 2)
 
-        #the line of the shortest distance and longer length will be the first
-        #choice
+        #the line of the shortest distance and longer length will be the first choice
         vectors.sort(lambda a, b: cmp(a[0], b[0]) if a[0] != b[0] else -cmp(a[1], b[1]))
 
         best = vectors[0]
@@ -184,11 +189,11 @@ class ImageProcessor(object):
             #draw the best line
             cv2.line(img, best_coord[:2], best_coord[2:], (0, 255, 255), 2)
 
-        if abs(best_thetaB - np.pi / 2) <= tolerance and abs(best_thetaA - best_thetaB) >= np.pi / 4:
+        if abs(best_thetaB - np.pi/2) <= tolerance and abs(best_thetaA - best_thetaB) >= np.pi/4:
             print "*** sharp turning"
             best_x1, best_y1, best_x2, best_y2 = best_coord
             f = lambda x: int(((float(best_y2) - float(best_y1)) / (float(best_x2) - float(best_x1)) * (x - float(best_x1))) + float(best_y1))
-            left_x , left_y = 0, f(0)
+            left_x , left_y  = 0, f(0)
             right_x, right_y = image_width - 1, f(image_width - 1)
 
             if left_y < right_y:
@@ -210,7 +215,7 @@ class ImageProcessor(object):
         else:
             steering_angle = best_thetaB
 
-        if (steering_angle - np.pi / 2) * (last_steering_angle - np.pi / 2) < 0:
+        if (steering_angle - np.pi/2) * (last_steering_angle - np.pi/2) < 0:
             last = ImageProcessor._find_best_matched_line(None, last_steering_angle, tolerance, vectors)
 
             if last:
@@ -225,24 +230,24 @@ class ImageProcessor(object):
             #draw the steering direction
             r = 60
             x = image_width / 2 + int(r * math.cos(steering_angle))
-            y = image_height - int(r * math.sin(steering_angle))
+            y = image_height    - int(r * math.sin(steering_angle))
             cv2.line(img, (image_width / 2, image_height), (x, y), (255, 0, 255), 2)
-            logit("line angle: %0.2f, steering angle: %0.2f, last steering angle: %0.2f" % (ImageProcessor.rad2deg(best_thetaA), ImageProcessor.rad2deg(np.pi / 2 - steering_angle), ImageProcessor.rad2deg(np.pi / 2 - last_steering_angle)))
+            CustomLog.logit("line angle: %0.2f, steering angle: %0.2f, last steering angle: %0.2f" % (ImageProcessor.rad2deg(best_thetaA), ImageProcessor.rad2deg(np.pi/2-steering_angle), ImageProcessor.rad2deg(np.pi/2-last_steering_angle)))
 
-        return (np.pi / 2 - steering_angle)
+        return (np.pi/2 - steering_angle)
 
 
     @staticmethod
-    def find_steering_angle_by_color(img, last_steering_angle, debug=True):
-        r, g, b = cv2.split(img)
+    def find_steering_angle_by_color(img, last_steering_angle, debug = True):
+        r, g, b      = cv2.split(img)
         image_height = img.shape[0]
-        image_width = img.shape[1]
-        camera_x = image_width / 2
+        image_width  = img.shape[1]
+        camera_x     = image_width / 2
         image_sample = slice(0, int(image_height * 0.2))
-        sr, sg, sb = r[image_sample, :], g[image_sample, :], b[image_sample, :]
-        track_list = [sr, sg, sb]
-        tracks = map(lambda x: len(x[x > 20]), [sr, sg, sb])
-        tracks_seen = filter(lambda y: y > 50, tracks)
+        sr, sg, sb   = r[image_sample, :], g[image_sample, :], b[image_sample, :]
+        track_list   = [sr, sg, sb]
+        tracks       = map(lambda x: len(x[x > 20]), [sr, sg, sb])
+        tracks_seen  = filter(lambda y: y > 50, tracks)
 
         if len(tracks_seen) == 0:
             return 0.0
@@ -257,8 +262,8 @@ class ImageProcessor(object):
             #draw the steering direction
             r = 60
             x = image_width / 2 + int(r * math.cos(steering_angle))
-            y = image_height - int(r * math.sin(steering_angle))
+            y = image_height    - int(r * math.sin(steering_angle))
             cv2.line(img, (image_width / 2, image_height), (x, y), (255, 0, 255), 2)
-            logit("steering angle: %0.2f, last steering angle: %0.2f" % (ImageProcessor.rad2deg(steering_angle), ImageProcessor.rad2deg(np.pi / 2 - last_steering_angle)))
+            CustomLog.logit("steering angle: %0.2f, last steering angle: %0.2f" % (ImageProcessor.rad2deg(steering_angle), ImageProcessor.rad2deg(np.pi/2-last_steering_angle)))
 
-        return (np.pi / 2 - steering_angle) * 2.0
+        return (np.pi/2 - steering_angle) * 2.0
