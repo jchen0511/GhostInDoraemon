@@ -53,7 +53,7 @@ if __name__ == "__main__":
             },
             skip_sid=True)
 
-    car = Car.Car(control_function = send_control)
+    car = Car(control_function = send_control)
     drive = AutoDrive.AutoDrive(car, args.record)
 
     @sio.on('telemetry')

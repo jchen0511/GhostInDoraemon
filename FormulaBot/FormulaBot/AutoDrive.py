@@ -1,5 +1,5 @@
-import Pid
-import ImageProcessor
+from Pid import PID
+from ImageProcessor import ImageProcessor
 import CustomLog
 
 class AutoDrive(object):
@@ -19,8 +19,8 @@ class AutoDrive(object):
 
     def __init__(self, car, record_folder = None):
         self._record_folder    = record_folder
-        self._steering_pid     = Pid.PID(Kp=self.STEERING_PID_Kp  , Ki=self.STEERING_PID_Ki  , Kd=self.STEERING_PID_Kd  , max_integral=self.STEERING_PID_max_integral  )
-        self._throttle_pid     = Pid.PID(Kp=self.THROTTLE_PID_Kp  , Ki=self.THROTTLE_PID_Ki  , Kd=self.THROTTLE_PID_Kd  , max_integral=self.THROTTLE_PID_max_integral  )
+        self._steering_pid     = PID(Kp=self.STEERING_PID_Kp  , Ki=self.STEERING_PID_Ki  , Kd=self.STEERING_PID_Kd  , max_integral=self.STEERING_PID_max_integral  )
+        self._throttle_pid     = PID(Kp=self.THROTTLE_PID_Kp  , Ki=self.THROTTLE_PID_Ki  , Kd=self.THROTTLE_PID_Kd  , max_integral=self.THROTTLE_PID_max_integral  )
         self._throttle_pid.assign_set_point(self.DEFAULT_SPEED)
         self._steering_history = []
         self._throttle_history = []
@@ -29,23 +29,23 @@ class AutoDrive(object):
 
 
     def on_dashboard(self, src_img, last_steering_angle, speed, throttle, info):
-        track_img     = ImageProcessor.ImageProcessor.preprocess(src_img)
-        current_angle = ImageProcessor.ImageProcessor.find_steering_angle_by_color(track_img, last_steering_angle, debug = self.debug)
+        track_img     = ImageProcessor.preprocess(src_img)
+        current_angle = ImageProcessor.find_steering_angle_by_color(track_img, last_steering_angle, debug = self.debug)
         #current_angle = ImageProcessor.find_steering_angle_by_line(track_img, last_steering_angle, debug = self.debug)
         steering_angle = self._steering_pid.update(-current_angle)
         throttle       = self._throttle_pid.update(speed)
 
         if self.debug:
-            ImageProcessor.ImageProcessor.show_image(src_img, "source")
-            ImageProcessor.ImageProcessor.show_image(track_img, "track")
-            CustomLog.logit("steering PID: %0.2f (%0.2f) => %0.2f (%0.2f)" % (current_angle, ImageProcessor.ImageProcessor.rad2deg(current_angle), steering_angle, ImageProcessor.ImageProcessor.rad2deg(steering_angle)))
+            ImageProcessor.show_image(src_img, "source")
+            ImageProcessor.show_image(track_img, "track")
+            CustomLog.logit("steering PID: %0.2f (%0.2f) => %0.2f (%0.2f)" % (current_angle, ImageProcessor.rad2deg(current_angle), steering_angle, ImageProcessor.rad2deg(steering_angle)))
             CustomLog.logit("throttle PID: %0.4f => %0.4f" % (speed, throttle))
             CustomLog.logit("info: %s" % repr(info))
 
         if self._record_folder:
-            suffix = "-deg%0.3f" % (ImageProcessor.ImageProcessor.rad2deg(steering_angle))
-            ImageProcessor.ImageProcessor.save_image(self._record_folder, src_img  , prefix = "cam", suffix = suffix)
-            ImageProcessor.ImageProcessor.save_image(self._record_folder, track_img, prefix = "trk", suffix = suffix)
+            suffix = "-deg%0.3f" % (ImageProcessor.rad2deg(steering_angle))
+            ImageProcessor.save_image(self._record_folder, src_img  , prefix = "cam", suffix = suffix)
+            ImageProcessor.save_image(self._record_folder, track_img, prefix = "trk", suffix = suffix)
 
         #smooth the control signals
         self._steering_history.append(steering_angle)
